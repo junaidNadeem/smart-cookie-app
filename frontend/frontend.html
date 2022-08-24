@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+    <style>
+        #vid-container {
+            position: relative;
+            z-index: 0;
+        }
+        #player {
+            z-index: 0;
+        }
+        .btn{
+            position: absolute;
+            left: 300px;
+            top: 37.3%;
+            width: 100px;
+            height: 100px;
+            color: black;
+            background-color: white;
+            text-transform: uppercase;
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: 700;
+            font-size: 32px;
+            border-radius: 52px;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        .btn div{
+            z-index: 2;
+            color: black;
+        }
+        .hidden{
+            display: none;
+        }
+    </style>
+    <body>
+        <!-- 1. The <iframe> (and video player) will replace this <div> tag. -->
+        <div id="vid-container">
+            <div id="play-btn" class="btn"><div>play</div></div>
+            <video id="player" width="700px">
+                <source
+                    src="Move and Add, Add and Move _ Jack Hartmann Addition Song.mp4"
+                    type="video/mp4"
+                />
+            </video>
+        </div>
+        <!-- 2. This will contain our questions -->
+        <div id="question-block">
+            <h2>Answer the question in Video to continue: </h2>
+            <div id="answer-block"></div>
+        </div>
+        <script>
+            // sample questions.
+            const questions = [
+                {
+                    seconds: 59,
+                    options: [3, 2, 5, 4],
+                    answer: 5,
+                    isAnswered: false,
+                },
+                {
+                    seconds: 89,
+                    options: [3, 2, 5, 4],
+                    answer: 3,
+                    isAnswered: false,
+                },
+                {
+                    seconds: 119,
+                    options: [3, 7, 5, 4],
+                    answer: 7,
+                    isAnswered: false,
+                },
+                {
+                    seconds: 164,
+                    options: [3, 7, 5, 4],
+                    answer: 7,
+                    isAnswered: false,
+                },
+                {
+                    seconds: 224,
+                    options: [10, 7, 5, 9],
+                    answer: 10,
+                    isAnswered: false,
+                }
+            ];
+            let key;
+            const playBtn = document.getElementById('play-btn');
+            const questionBlock = document.getElementById("question-block");
+            const answerBlock = document.getElementById('answer-block');
+            const player = document.getElementById("player");
+            
+            init();
+
+
+            function onPlayBtnClick() {
+                if(!isVideoPaused()) return;
+                hidePlayBtn();
+                playVideo();
+            }
+
+            function onPlayerClick(){
+                if(isVideoPaused()) return;
+                showPlayBtn();
+                pauseVideo();
+            } 
+            
+            function onVideoReady(event) {
+                if(!isAnyQuestionUnanswered()) return;
+                key = setInterval(() => observeVideoDuration(), 100);
+            }
+
+            function onVideoEnd(){
+                if(!key) return;
+                clearInterval(key);
+
+            }
+            
+            // this function is useful if questions are stateful e.g. uses localStorage or some API.
+            function isAnyQuestionUnanswered(){
+                return questions.filter((q) => !q.isAnswered).length > 0
+            }
+            
+            function isTimeToShowQuestion(index){
+                const question = questions[index];
+                const time = player.currentTime;
+                return time >= question.seconds
+            }
+
+            function observeVideoDuration() {
+                const index = questions.findIndex((q) => !q.isAnswered);
+                if(index < 0 || !isTimeToShowQuestion(index) || isVideoPaused()) return;
+                showQuestion(index);
+                pauseVideo();
+            }
+
+            function isAnswerCorrect(questionIndex, value) {
+                if (questions[questionIndex].answer.toString() === value) {
+                    questions[questionIndex].isAnswered = true;
+                    return true;
+                }
+                return false;
+            }
+
+            function checkAnswer(questionIndex, value) {
+                
+                if (!isAnswerCorrect(questionIndex, value)) return;
+                hideQuestion();
+                playVideo();
+                console.log(questions)
+            }
+
+            function prepareQuestionHTML(questionIndex) {
+                for (const index in questions[questionIndex].options) {
+                    const input = document.createElement("input");
+                    const ansId = "ans-" + index;
+                    input.type = "radio";
+                    input.id = ansId;
+                    input.name = "ans";
+                    input.value = questions[questionIndex].options[index].toString();
+                    input.onclick = function (e) {
+                        checkAnswer(questionIndex, e.target.value);
+                    };
+                    const label = document.createElement("label");
+                    label.for = ansId;
+                    label.innerHTML = questions[questionIndex].options[index];
+                    const br = document.createElement("br");
+                    answerBlock.appendChild(input);
+                    answerBlock.appendChild(label);
+                    answerBlock.appendChild(br);
+                }
+            }
+
+            function showQuestion(index) {
+                prepareQuestionHTML(index);
+                questionBlock.style.display = "block";
+            }
+
+            function hideQuestion() {
+                questionBlock.style.display = "none";
+                answerBlock.innerHTML = "";
+            }
+
+            function init() {
+                hideQuestion();
+                questions.sort((a, b) => a.seconds - b.seconds);
+                playBtn.addEventListener('click', onPlayBtnClick);
+                player.addEventListener('click', onPlayerClick);
+                player.addEventListener('canplay',onVideoReady);
+                player.addEventListener('ended', onVideoEnd)
+            }
+
+            function isVideoPaused(){
+                return player.paused;
+            }
+
+            function playVideo(){
+                player.play();
+            }
+
+            function pauseVideo(){
+                player.pause();
+            }
+
+            function hidePlayBtn(){
+                playBtn.classList.add('hidden');
+            }
+
+            function showPlayBtn(){
+                playBtn.classList.remove('hidden');
+            }
+        </script>
+    </body>
+</html>
