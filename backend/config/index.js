@@ -1,5 +1,6 @@
-const DRIP_API_KEY = ''
-const DRIP_ACCOUNT_ID = ''
+const DRIP_API_KEY = '233b77e6def0dcce50afb421e5035c4b'
+const DRIP_ACCOUNT_ID = 9090283
+const PORT = 3000
 const FIREBASE_CONFIG = {
     apiKey: "AIzaSyCtDSmQ5MgchWQ_ZedSKvAZSI-66uRScuU",
     authDomain: "random-1a7f0.firebaseapp.com",
@@ -13,4 +14,5 @@ export {
     DRIP_API_KEY,
     DRIP_ACCOUNT_ID,
     FIREBASE_CONFIG,
+    PORT
 }

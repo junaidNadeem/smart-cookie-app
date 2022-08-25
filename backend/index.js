@@ -1,57 +1,50 @@
-
-
-import { initializeApp } from 'firebase/app';
-import { getFirestore, setDoc, doc } from 'firebase/firestore/lite';
-import { DRIP_ACCOUNT_ID, DRIP_API_KEY, FIREBASE_CONFIG } from './config';
 import express from 'express';
+import { doc, getDoc } from 'firebase/firestore/lite';
+import { PORT } from './config/index.js';
+import { drip } from './drip-client/index.js';
+import db from './firebase/index.js';
+import { seedUser, USER } from './seed/index.js'; 
 
-const client = require('drip-nodejs')({ token: DRIP_API_KEY, accountId: DRIP_ACCOUNT_ID });
-const port = 3000
 const app = express()
-const firebaseApp = initializeApp(FIREBASE_CONFIG);
-const db = getFirestore(firebaseApp);
-
-const user = {
-    id:'1',
-    email: 'asd@312.com'
-}
-
-
-async function seedUser(user){
-    return setDoc(doc(db,'Users', user.id), user)
-}
 
 async function initializeData () {
     try {
-        await seedUser(user)
-        const res = client.createUpdateSubscriber(payload)
-        console.log ('CREATED A SUBSCRIBER',res)
+        // Comment the line below if dont want to seed user.
+        await seedUser()
+
+
+        //Uncomment below lines and add a valid path if plan to use your own firestore db without the seeder. 
+
+        // const userSnap = await getDoc(doc(db,'Users',USER.id))
+        // const USER = userSnap.data()
+
+        await drip.createUpdateSubscriber({email: USER.email})
+        console.log ('Created a subscriber')
     } catch (error) {
         console.log(error)
     }
 }
 
-
-
-app.use('/subscribers', async (req,res,next) => {
+// http://localhost:3000/subscribers
+app.get('/subscribers', async (req,res,next) => {
+    
     try{
-        const result = await client.listSubscribers()
+        const result = await drip.listSubscribers()
         res.status(200).json({
-            data :result,
-            error: null
+            data: result?.body
         })
     }catch(error){
-        console.log(error)
+        console.log('Failed to get subscribers list')
         res.status(500).json({
-            data: null,
             error
         })
     }
 })
 
+
 initializeData()
 .then(()=>{
-    app.listen(port,()=> {
-        console.log('app started on port ', port)
+    app.listen(PORT,()=> {
+        console.log('app started on port ', PORT)
     })
 })
